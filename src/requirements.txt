@@ -1,3 +1,4 @@
 pytest==9.1.0
 ruff==0.15.17
 flet==0.85.3
+pyinstaller==6.21.0
