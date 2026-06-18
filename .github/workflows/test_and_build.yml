@@ -63,7 +63,7 @@ jobs:
         CARDS=$(curl -s "https://api.trello.com/1/lists/${{ secrets.TRELLO_IN_PROGRESS }}/cards?key=${{ secrets.TRELLO_KEY }}&token=${{ secrets.TRELLO_TOKEN }}")  
             
         COMMIT_MSG="${{ github.event.head_commit.message }}"
-        CARD_ID=$(echo "$CARDS" | jq -r --arg msg "$COMMIT_MSG" '.[] | select(.name | contains($msg)) | .id' | head -n 1)
+        CARD_ID=$(echo "$CARDS" | jq -r --arg msg "$COMMIT_MSG" '.[] | select($msg | contains(.name)) | .id' | head -n 1)
 
         if [ ! -z "$CARD_ID" ] && [ "$CARD_ID" != "null" ]; then
           curl -X PUT "https://api.trello.com/1/cards/$CARD_ID" \
