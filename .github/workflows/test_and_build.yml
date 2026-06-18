@@ -2,29 +2,66 @@ name: Test And Build
 
 on:
   push:
+    branches: [ "main","develop" ]
+  pull_request:
     branches: [ "main" ]
-  #pull_request: -- no lo necesito, no lo estoy utilizando
-  #  branches: [ "main" ]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   test_and_build:
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python 3.14
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: "3.14"
+
     - name: Install dependencies  
       run: pip install -r src/requirements.txt
+
     - name: Check linting
       working-directory: src
       run: ruff check .
+
     - name: Test with pytest
       working-directory: src
       run: pytest test_app.py
+
+    - name: Build Windows executable
+      run: flet pack src/app.py --name MiAppFlet
+
+    - name: Publish GitHub Release
+      uses: softprops/action-gh-release@v2
+      if: github.ref == 'refs/heads/main'
+      with:
+        tag_name: "v1.0.${{ github.run_number }}"
+        name: "Versión 1.0.${{ github.run_number }}"
+        files: dist/MiAppFlet.exe
+        body: "Lanzamiento automático de la nueva versión aprobada en producción."
+
+    - name: Report failure to Trello
+      if: failure()
+      shell: bash
+      run: |
+        curl -X POST "https://api.trello.com/1/cards" \
+          -d "idList=${{ secrets.TRELLO_REPORTE_FALLAS }}" \
+          -d "key=${{ secrets.TRELLO_KEY }}" \
+          -d "token=${{ secrets.TRELLO_TOKEN }}" \
+          -d "name=Error: ${{ github.ref_name }}-${{ github.event.head_commit.message }}" \
+          -d "desc=Se ha detectado un error en las pruebas. Ver detalles en el siguiente link: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+    - name: Report success to Trello
+      if: success() && github.ref == 'refs/heads/main'
+      shell: bash
+      run: |
+        curl -X POST "https://api.trello.com/1/cards" \
+          -d "idList=${{ secrets.TRELLO_HECHO }}" \
+          -d "key=${{ secrets.TRELLO_KEY }}" \
+          -d "token=${{ secrets.TRELLO_TOKEN }}" \
+          -d "name=Update-${{ github.event.head_commit.message }}" \
+          -d "desc=Todas las pruebas pasaron correctamente en la rama main. Registro: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
