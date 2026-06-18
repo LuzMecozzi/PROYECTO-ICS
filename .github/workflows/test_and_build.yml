@@ -2,7 +2,7 @@ name: Test And Build
 
 on:
   push:
-    branches: [ "main","develop" ]
+    branches: [ "develop" ]  
   pull_request:
     branches: [ "main" ]
 
@@ -33,7 +33,7 @@ jobs:
       run: pytest test_app.py
 
     - name: Build Windows executable
-      run: flet pack src/app.py --name MiAppFlet
+      run: flet pack src/app.py --name PROYECTO CI/CD-ICS 
 
     - name: Publish GitHub Release
       uses: softprops/action-gh-release@v2
@@ -49,19 +49,29 @@ jobs:
       shell: bash
       run: |
         curl -X POST "https://api.trello.com/1/cards" \
-          -d "idList=${{ secrets.TRELLO_REPORTE_FALLAS }}" \
+          -d "idList=${{ secrets.TRELLO_ERROR_REPORT }}" \
           -d "key=${{ secrets.TRELLO_KEY }}" \
           -d "token=${{ secrets.TRELLO_TOKEN }}" \
           -d "name=Error: ${{ github.ref_name }}-${{ github.event.head_commit.message }}" \
           -d "desc=Se ha detectado un error en las pruebas. Ver detalles en el siguiente link: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-    - name: Report success to Trello
+    - name: Move card from In Progress to Done
       if: success() && github.ref == 'refs/heads/main'
       shell: bash
       run: |
-        curl -X POST "https://api.trello.com/1/cards" \
-          -d "idList=${{ secrets.TRELLO_HECHO }}" \
-          -d "key=${{ secrets.TRELLO_KEY }}" \
-          -d "token=${{ secrets.TRELLO_TOKEN }}" \
-          -d "name=Update-${{ github.event.head_commit.message }}" \
-          -d "desc=Todas las pruebas pasaron correctamente en la rama main. Registro: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+    
+        CARDS=$(curl -s "https://api.trello.com/1/lists/${{ secrets.TRELLO_IN_PROGRESS }}/cards?key=${{ secrets.TRELLO_KEY }}&token=${{ secrets.TRELLO_TOKEN }}")  
+            
+        COMMIT_MSG="${{ github.event.head_commit.message }}"
+        CARD_ID=$(echo "$CARDS" | jq -r --arg msg "$COMMIT_MSG" '.[] | select(.name | contains($msg)) | .id' | head -n 1)
+
+        if [ ! -z "$CARD_ID" ] && [ "$CARD_ID" != "null" ]; then
+          curl -X PUT "https://api.trello.com/1/cards/$CARD_ID" \
+            -d "idList=${{ secrets.TRELLO_DONE }}" \
+            -d "key=${{ secrets.TRELLO_KEY }}" \
+            -d "token=${{ secrets.TRELLO_TOKEN }}" \
+            -d "desc=Despliegue exitoso en producción. Registro de ejecución: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "Tarjeta movida con éxito."
+          else
+            echo "No se encontró ninguna tarjeta en In Progress que coincida con el mensaje del commit."
+          fi
