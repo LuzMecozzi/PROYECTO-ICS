@@ -64,4 +64,4 @@ def main(page: ft.Page):
     page.add(tarjeta_principal)
 
 if __name__ == "__main__":
-    ft.run(main)
+    ft.app(target=main)
