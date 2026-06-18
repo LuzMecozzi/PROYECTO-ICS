@@ -61,7 +61,6 @@ def main(page: ft.Page):
         )
     )
 
-    # 5. Agregar la tarjeta a la pantalla
     page.add(tarjeta_principal)
 
 if __name__ == "__main__":
