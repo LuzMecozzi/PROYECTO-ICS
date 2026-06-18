@@ -52,8 +52,8 @@ jobs:
           -d "idList=${{ secrets.TRELLO_REPORTE_FALLAS }}" \
           -d "key=${{ secrets.TRELLO_KEY }}" \
           -d "token=${{ secrets.TRELLO_TOKEN }}" \
-          -d "name=Fallo: ${{ github.ref_name }}-${{ github.event.head_commit.message }}" \
-          -d "desc=Se detectó un error en las pruebas. Ver detalles aquí: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          -d "name=Error: ${{ github.ref_name }}-${{ github.event.head_commit.message }}" \
+          -d "desc=Se ha detectado un error en las pruebas. Ver detalles en el siguiente link: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
     - name: Report success to Trello
       if: success() && github.ref == 'refs/heads/main'
@@ -63,5 +63,5 @@ jobs:
           -d "idList=${{ secrets.TRELLO_HECHO }}" \
           -d "key=${{ secrets.TRELLO_KEY }}" \
           -d "token=${{ secrets.TRELLO_TOKEN }}" \
-          -d "name=Actualización-${{ github.event.head_commit.message }}" \
+          -d "name=Update-${{ github.event.head_commit.message }}" \
           -d "desc=Todas las pruebas pasaron correctamente en la rama main. Registro: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
