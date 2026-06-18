@@ -41,7 +41,7 @@ jobs:
       with:
         tag_name: "v1.0.${{ github.run_number }}"
         name: "Versión 1.0.${{ github.run_number }}"
-        files: dist/MiAppFlet.exe
+        files: dist/PROYECTO_ICS.exe
         body: "Lanzamiento automático de la nueva versión aprobada en producción."
 
     - name: Report failure to Trello
