@@ -59,19 +59,17 @@ jobs:
       run: |
         CARDS=$(curl -s "https://api.trello.com/1/lists/${{ secrets.TRELLO_IN_PROGRESS }}/cards?key=${{ secrets.TRELLO_KEY }}&token=${{ secrets.TRELLO_TOKEN }}")  
         
-        # --- LÍNEA DE DEBUG: Imprime el error real de Trello ---
-        echo "RESPUESTA CRUDA DE TRELLO: $CARDS"
-        # -------------------------------------------------------
-
         COMMIT_MSG="${{ github.event.head_commit.message }}"
-        CARD_ID=$(echo "$CARDS" | jq -r --arg msg "$COMMIT_MSG" '.[] | select($msg | contains(.name)) | .id' | head -n 1)
+        
+        # LÍNEA CORREGIDA: Guardamos el nombre de la tarjeta en una variable antes de comparar
+        CARD_ID=$(echo "$CARDS" | jq -r --arg msg "$COMMIT_MSG" '.[] | .name as $nombre_tarjeta | select($msg | contains($nombre_tarjeta)) | .id' | head -n 1)
 
         if [ ! -z "$CARD_ID" ] && [ "$CARD_ID" != "null" ]; then
           curl -X PUT "https://api.trello.com/1/cards/$CARD_ID" \
             -d "idList=${{ secrets.TRELLO_DONE }}" \
             -d "key=${{ secrets.TRELLO_KEY }}" \
             -d "token=${{ secrets.TRELLO_TOKEN }}" \
-            -d "desc=Despliegue exitoso. Ejecución: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            -d "desc=Despliegue exitoso en producción. Registro de ejecución: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           echo "Tarjeta movida con éxito."
         else
           echo "No se encontró ninguna tarjeta en In Progress que coincida con el mensaje del commit."
