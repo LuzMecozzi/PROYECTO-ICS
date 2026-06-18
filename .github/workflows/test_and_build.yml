@@ -35,12 +35,14 @@ jobs:
     - name: Build Windows executable
       run: flet pack src/app.py --name "PROYECTO_ICS"
 
-
-#    - name: Publish GitHub Release
- #     uses: softprops/action-gh-release@v2
-  #   name: "Versión 1.0.${{ github.run_number }}"
-   #     files: dist/PROYECTO_ICS.exe
-    #    body: "Lanzamiento automático de la nueva versión aprobada en producción."
+    - name: Publish GitHub Release
+      uses: softprops/action-gh-release@v2
+      if: github.ref == 'refs/heads/main'
+      with:
+        tag_name: "v1.0.${{ github.run_number }}"
+        name: "Versión 1.0.${{ github.run_number }}"
+        files: dist/PROYECTO_ICS.exe
+        body: "Lanzamiento automático de la nueva versión aprobada en producción."
 
     - name: Report failure to Trello
       if: failure()
