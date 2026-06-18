@@ -33,7 +33,7 @@ jobs:
       run: pytest test_app.py
 
     - name: Build Windows executable
-      run: flet pack src/app.py --name PROYECTO CI/CD-ICS 
+      run: flet pack src/app.py --name "PROYECTO CI/CD-ICS"
 
     - name: Publish GitHub Release
       uses: softprops/action-gh-release@v2
