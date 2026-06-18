@@ -43,3 +43,25 @@ jobs:
         name: "Versión 1.0.${{ github.run_number }}"
         files: dist/MiAppFlet.exe
         body: "Lanzamiento automático de la nueva versión aprobada en producción."
+
+    - name: Report failure to Trello
+      if: failure()
+      shell: bash
+      run: |
+        curl -X POST "https://api.trello.com/1/cards" \
+          -d "idList=${{ secrets.TRELLO_REPORTE_FALLAS }}" \
+          -d "key=${{ secrets.TRELLO_KEY }}" \
+          -d "token=${{ secrets.TRELLO_TOKEN }}" \
+          --data-urlencode "name=Fallo: ${{ github.ref_name }}-${{ github.event.head_commit.message }}" \
+          --data-urlencode "desc=Se detectó un error en las pruebas. Ver detalles aquí: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+    - name: Report success to Trello
+      if: success() && github.ref == 'refs/heads/main'
+      shell: bash
+      run: |
+        curl -X POST "https://api.trello.com/1/cards" \
+          -d "idList=${{ secrets.TRELLO_HECHO }}" \
+          -d "key=${{ secrets.TRELLO_KEY }}" \
+          -d "token=${{ secrets.TRELLO_TOKEN }}" \
+          --data-urlencode "name=Actualización-${{ github.event.head_commit.message }}" \
+          --data-urlencode "desc=Todas las pruebas pasaron correctamente en la rama main. Registro: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
